@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrandFound - Premium Deal Finder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            primary: '#1A1A1A',
+                            accent: '#E0A387',
+                            bg: '#FDFCFB',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @layer base {
+            body {
+                background-color: #FDFCFB;
+                color: #1A1A1A;
+                -webkit-tap-highlight-color: transparent;
+            }
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Custom animations for non-motion version if needed */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="module">
+        import React, { useState, useMemo } from 'https://esm.sh/react@19';
+        import ReactDOM from 'https://esm.sh/react-dom@19/client';
+        import { 
+            Search, Menu, Heart, Bell, ChevronRight, Star, Filter, X, 
+            ArrowUpDown, Laptop, Puzzle, Sparkles, ShoppingBag, 
+            Gamepad2, Home as HomeIcon, Plus 
+        } from 'https://esm.sh/lucide-react';
+        import { motion, AnimatePresence } from 'https://esm.sh/framer-motion';
+
+        const MOCK_PRODUCTS = [
+            {
+                id: '1',
+                brand: 'Beauty of Joseon',
+                name: 'Relief Sun : Rice + Probiotics (SPF50+ PA++++)',
+                price: 11.99,
+                originalPrice: 18.00,
+                image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=400',
+                rating: 4.8,
+                reviews: 1250,
+                store: 'Olive Young',
+                category: 'Beauty',
+                inStock: true,
+                tags: ['Korean', 'Rice', 'Lightweight'],
+                specs: { 'SPF': '50+', 'PA': '++++', 'Volume': '50ml' }
+            },
+            {
+                id: '2',
+                brand: 'Round Lab',
+                name: 'Birch Juice Moisturizing Sunscreen',
+                price: 14.50,
+                originalPrice: 21.00,
+                image: 'https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?auto=format&fit=crop&q=80&w=400',
+                rating: 4.9,
+                reviews: 3200,
+                store: 'Stylevana',
+                category: 'Beauty',
+                inStock: true,
+                tags: ['Korean', 'Hydrating'],
+                specs: { 'SPF': '50+', 'PA': '++++', 'Volume': '50ml' }
+            },
+            {
+                id: '5',
+                brand: 'Nintendo',
+                name: 'Switch OLED Model - White Edition',
+                price: 299.00,
+                originalPrice: 349.99,
+                image: 'https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?auto=format&fit=crop&q=80&w=400',
+                rating: 4.9,
+                reviews: 8900,
+                store: 'Target',
+                category: 'Gaming',
+                inStock: true,
+                tags: ['OLED', 'Handheld', 'Gaming'],
+                specs: { 'Screen': '7-inch OLED', 'Storage': '64GB', 'Battery': 'Up to 9h' }
+            },
+            {
+                id: '6',
+                brand: 'LEGO',
+                name: 'Star Wars Millenium Falcon Building Set',
+                price: 139.99,
+                originalPrice: 169.99,
+                image: 'https://images.unsplash.com/photo-1585366119957-e9730b6d0f60?auto=format&fit=crop&q=80&w=400',
+                rating: 4.8,
+                reviews: 1250,
+                store: 'Amazon',
+                category: 'Toys',
+                inStock: true,
+                tags: ['Building', 'Collector'],
+                specs: { 'Pieces': '1351', 'Age': '9+', 'Theme': 'Star Wars' }
+            },
+            {
+                id: '7',
+                brand: 'Nike',
+                name: 'Air Jordan 1 Low - Retro Chic',
+                price: 85.00,
+                originalPrice: 110.00,
+                image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=400',
+                rating: 4.7,
+                reviews: 3200,
+                store: 'Nike Store',
+                category: 'Fashion',
+                inStock: true,
+                tags: ['Retro', 'Limited'],
+                specs: { 'Material': 'Leather', 'Outsole': 'Rubber' }
+            },
+            {
+                id: '8',
+                brand: 'Dyson',
+                name: 'V15 Detect Cordless Vacuum',
+                price: 549.00,
+                originalPrice: 749.99,
+                image: 'https://images.unsplash.com/photo-1558317374-067df5f14875?auto=format&fit=crop&q=80&w=400',
+                rating: 4.9,
+                reviews: 4500,
+                store: 'Best Buy',
+                category: 'Home',
+                inStock: true,
+                tags: ['Smart', 'HEPA'],
+                specs: { 'Runtime': '60 min', 'Suction': '230 AW' }
+            },
+            {
+                id: '9',
+                brand: 'Sony',
+                name: 'WH-1000XM5 Wireless Headphones',
+                price: 298.00,
+                originalPrice: 399.00,
+                image: 'https://images.unsplash.com/photo-1613040809024-b4ef7ba99bc3?auto=format&fit=crop&q=80&w=400',
+                rating: 4.9,
+                reviews: 2100,
+                store: 'Amazon',
+                category: 'Tech',
+                inStock: true,
+                tags: ['Noise Cancelling', 'Wireless'],
+                specs: { 'Battery': '30h', 'Connection': 'Bluetooth 5.2' }
+            }
+        ];
+
+        const CATEGORIES = [
+            { id: 'Tech', label: 'Tech', icon: Laptop },
+            { id: 'Toys', label: 'Toys', icon: Puzzle },
+            { id: 'Beauty', label: 'Beauty', icon: Sparkles },
+            { id: 'Fashion', label: 'Fashion', icon: ShoppingBag },
+            { id: 'Gaming', label: 'Gaming', icon: Gamepad2 },
+            { id: 'Home', label: 'Home', icon: HomeIcon },
+        ];
+
+        function App() {
+            const [search, setSearch] = useState('');
+            const [selectedCategory, setSelectedCategory] = useState('All');
+            const [favorites, setFavorites] = useState([]);
+            const [compareList, setCompareList] = useState([]);
+            const [showCompare, setShowCompare] = useState(false);
+            const [priceAlerts, setPriceAlerts] = useState([]);
+            const [showFilters, setShowFilters] = useState(false);
+            const [maxPrice, setMaxPrice] = useState(1000);
+            const [selectedStores, setSelectedStores] = useState([]);
+            const [sortBy, setSortBy] = useState('rating');
+
+            const STORES = useMemo(() => Array.from(new Set(MOCK_PRODUCTS.map(p => p.store))), []);
+
+            const filteredProducts = useMemo(() => {
+                let result = MOCK_PRODUCTS.filter((p) => {
+                    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
+                                         p.brand.toLowerCase().includes(search.toLowerCase());
+                    const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
+                    const matchesPrice = p.price <= maxPrice;
+                    const matchesStore = selectedStores.length === 0 || selectedStores.includes(p.store);
+                    return matchesSearch && matchesCategory && matchesPrice && matchesStore;
+                });
+
+                if (sortBy === 'price-low') result.sort((a, b) => a.price - b.price);
+                if (sortBy === 'price-high') result.sort((a, b) => b.price - a.price);
+                if (sortBy === 'rating') result.sort((a, b) => b.rating - a.rating);
+
+                return result;
+            }, [search, selectedCategory, sortBy, maxPrice, selectedStores]);
+
+            const toggleFavorite = (id) => {
+                setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
+            };
+
+            const toggleCompare = (id) => {
+                setCompareList(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
+            };
+
+            const toggleAlert = (id) => {
+                setPriceAlerts(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]);
+            };
+
+            return React.createElement('div', { className: 'min-h-screen bg-[#FDFCFB] font-sans' },
+                // Header
+                React.createElement('header', { className: 'sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 flex flex-col pt-4' },
+                    React.createElement('div', { className: 'flex items-center justify-between px-4 pb-4' },
+                        React.createElement('div', { className: 'flex items-center gap-2' },
+                            React.createElement('div', { className: 'w-8 h-8 bg-black rounded-lg flex items-center justify-center shadow-lg transform -rotate-6' },
+                                React.createElement('span', { className: 'text-white font-bold text-lg' }, 'B')
+                            ),
+                            React.createElement('h1', { className: 'text-xl font-black tracking-tight text-black' }, 'BrandFound')
+                        ),
+                        React.createElement('div', { className: 'flex items-center gap-3' },
+                            React.createElement('button', { 
+                                onClick: () => setShowCompare(!showCompare),
+                                className: 'p-2 hover:bg-gray-100 rounded-full transition-colors relative'
+                            },
+                                React.createElement(ArrowUpDown, { className: 'w-5 h-5 text-gray-700' }),
+                                compareList.length > 0 && React.createElement('span', { className: 'absolute -top-1 -right-1 w-5 h-5 bg-black text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white' }, compareList.length)
+                            ),
+                            React.createElement('button', { className: 'p-2 hover:bg-gray-100 rounded-full relative' },
+                                React.createElement(Bell, { className: 'w-5 h-5 text-gray-700' }),
+                                priceAlerts.length > 0 && React.createElement('span', { className: 'absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white' })
+                            ),
+                            React.createElement('button', { className: 'p-2 hover:bg-gray-100 rounded-full' },
+                                React.createElement(Menu, { className: 'w-6 h-6 text-gray-700' })
+                            )
+                        )
+                    ),
+                    // Search
+                    React.createElement('div', { className: 'px-4 pb-4' },
+                        React.createElement('div', { className: 'relative group' },
+                            React.createElement(Search, { className: 'absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' }),
+                            React.createElement('input', {
+                                type: 'text',
+                                placeholder: 'Search premium brands...',
+                                className: 'w-full bg-gray-100 rounded-2xl py-3.5 pl-11 pr-4 focus:bg-white border-2 border-transparent focus:border-black/5 outline-none transition-all placeholder:text-gray-400 font-medium',
+                                value: search,
+                                onChange: (e) => setSearch(e.target.value)
+                            })
+                        )
+                    ),
+                    // Categories
+                    React.createElement('div', { className: 'flex overflow-x-auto no-scrollbar gap-2 px-4 pb-4' },
+                        React.createElement('button', {
+                            onClick: () => setSelectedCategory('All'),
+                            className: `px-6 py-2.5 rounded-2xl whitespace-nowrap text-sm font-bold transition-all ${selectedCategory === 'All' ? 'bg-black text-white shadow-lg' : 'bg-white border border-gray-100 text-gray-500'}`
+                        }, 'All Items'),
+                        CATEGORIES.map(cat => React.createElement('button', {
+                            key: cat.id,
+                            onClick: () => setSelectedCategory(cat.id),
+                            className: `flex items-center gap-2 px-5 py-2.5 rounded-2xl whitespace-nowrap text-sm font-bold transition-all ${selectedCategory === cat.id ? 'bg-black text-white shadow-lg' : 'bg-white border border-gray-100 text-gray-500'}`
+                        }, 
+                            React.createElement(cat.icon, { className: `w-4 h-4 ${selectedCategory === cat.id ? 'text-white' : 'text-gray-400'}` }),
+                            cat.label
+                        ))
+                    )
+                ),
+
+                // Main Content
+                React.createElement('main', { className: 'px-4 py-6 pb-32' },
+                    React.createElement('div', { className: 'flex items-center justify-between mb-6 px-1' },
+                        React.createElement('div', null,
+                            React.createElement('h2', { className: 'text-xl font-black tracking-tight' }, 'Curated Picks'),
+                            React.createElement('span', { className: 'text-[10px] font-black text-gray-400 uppercase tracking-widest' }, `${filteredProducts.length} Results`)
+                        ),
+                        React.createElement('div', { className: 'flex items-center gap-2' },
+                            React.createElement('button', { onClick: () => setShowFilters(true), className: 'flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-4 py-2' },
+                                React.createElement(Filter, { className: 'w-3.5 h-3.5 text-black' }),
+                                React.createElement('span', { className: 'text-xs font-black uppercase tracking-widest' }, 'Filters')
+                            ),
+                            React.createElement('div', { className: 'flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2' },
+                                React.createElement(ArrowUpDown, { className: 'w-3.5 h-3.5 text-gray-400' }),
+                                React.createElement('select', {
+                                    className: 'bg-transparent border-none focus:ring-0 text-xs font-bold uppercase cursor-pointer',
+                                    value: sortBy,
+                                    onChange: (e) => setSortBy(e.target.value)
+                                },
+                                    React.createElement('option', { value: 'rating' }, 'Popular'),
+                                    React.createElement('option', { value: 'price-low' }, 'Cheapest'),
+                                    React.createElement('option', { value: 'price-high' }, 'Expensive')
+                                )
+                            )
+                        )
+                    ),
+
+                    React.createElement('div', { className: 'grid grid-cols-2 gap-4' },
+                        filteredProducts.map(product => React.createElement(motion.div, {
+                            layout: true,
+                            key: product.id,
+                            className: 'bg-white rounded-[2rem] overflow-hidden border border-black/5 p-2'
+                        },
+                            React.createElement('div', { className: 'relative aspect-square rounded-[1.5rem] overflow-hidden bg-gray-50' },
+                                React.createElement('img', { src: product.image, className: 'w-full h-full object-cover' }),
+                                React.createElement('div', { className: 'absolute top-2 right-2 flex flex-col gap-2' },
+                                    React.createElement('button', { 
+                                        onClick: () => toggleFavorite(product.id),
+                                        className: `p-2 rounded-xl backdrop-blur-md ${favorites.includes(product.id) ? 'bg-red-500 text-white' : 'bg-white/80 text-gray-400'}`
+                                    }, React.createElement(Heart, { className: `w-4 h-4 ${favorites.includes(product.id) ? 'fill-current' : ''}` })),
+                                    React.createElement('button', { 
+                                        onClick: () => toggleCompare(product.id),
+                                        className: `p-2 rounded-xl backdrop-blur-md ${compareList.includes(product.id) ? 'bg-black text-white' : 'bg-white/80 text-gray-400'}`
+                                    }, React.createElement(ArrowUpDown, { className: 'w-4 h-4' }))
+                                )
+                            ),
+                            React.createElement('div', { className: 'p-3' },
+                                React.createElement('div', { className: 'flex justify-between mb-1' },
+                                    React.createElement('span', { className: 'text-[9px] uppercase font-black text-gray-400 tracking-widest' }, product.brand),
+                                    React.createElement('div', { className: 'flex items-center gap-0.5' },
+                                        React.createElement(Star, { className: 'w-2.5 h-2.5 fill-yellow-400 text-yellow-400' }),
+                                        React.createElement('span', { className: 'text-[9px] font-black' }, product.rating)
+                                    )
+                                ),
+                                React.createElement('h3', { className: 'text-sm font-bold line-clamp-2 h-10 mb-2 leading-tight' }, product.name),
+                                React.createElement('div', { className: 'flex items-baseline gap-1' },
+                                    React.createElement('span', { className: 'text-lg font-black tracking-tighter' }, `$${product.price}`),
+                                    product.originalPrice && React.createElement('span', { className: 'text-[9px] text-gray-400 font-bold line-through' }, `$${product.originalPrice}`)
+                                )
+                            )
+                        ))
+                    )
+                ),
+
+                // Navigation
+                React.createElement('nav', { className: 'fixed bottom-6 left-6 right-6 z-50' },
+                    React.createElement('div', { className: 'max-w-md mx-auto bg-black rounded-[2.5rem] p-2 flex justify-between shadow-2xl border border-white/10' },
+                        React.createElement('button', { className: 'flex-1 py-3 flex flex-col items-center text-white' },
+                            React.createElement(HomeIcon, { className: 'w-6 h-6' }),
+                            React.createElement('span', { className: 'text-[8px] font-black uppercase' }, 'Home')
+                        ),
+                        React.createElement('button', { className: 'flex-1 py-3 flex flex-col items-center text-white/40' },
+                            React.createElement(Heart, { className: 'w-6 h-6' }),
+                            React.createElement('span', { className: 'text-[8px] font-black uppercase' }, 'Favs')
+                        ),
+                        React.createElement('button', { 
+                            onClick: () => setShowCompare(true),
+                            className: 'flex-1 py-3 flex flex-col items-center text-white/40' 
+                        },
+                            React.createElement(ArrowUpDown, { className: 'w-6 h-6' }),
+                            React.createElement('span', { className: 'text-[8px] font-black uppercase' }, 'Compare')
+                        ),
+                        React.createElement('button', { className: 'flex-1 py-3 flex flex-col items-center text-white/40' },
+                            React.createElement(Bell, { className: 'w-6 h-6' }),
+                            React.createElement('span', { className: 'text-[8px] font-black uppercase' }, 'Alerts')
+                        )
+                    )
+                ),
+
+                // Comparison Drawer
+                React.createElement(AnimatePresence, null, showCompare && React.createElement(motion.div, {
+                    initial: { y: '100%' },
+                    animate: { y: 0 },
+                    exit: { y: '100%' },
+                    className: 'fixed inset-0 z-[100] bg-white flex flex-col'
+                },
+                    React.createElement('div', { className: 'p-6 border-b border-gray-100 flex justify-between' },
+                        React.createElement('div', null,
+                            React.createElement('h2', { className: 'text-2xl font-black' }, 'Compare'),
+                            React.createElement('span', { className: 'text-xs text-gray-400 font-bold' }, `${compareList.length} items`)
+                        ),
+                        React.createElement('button', { onClick: () => setShowCompare(false), className: 'p-2 bg-gray-50 rounded-xl' }, React.createElement(X, { className: 'w-6 h-6' }))
+                    ),
+                    React.createElement('div', { className: 'flex-grow overflow-x-auto p-6 flex gap-6' },
+                        compareList.map(id => {
+                            const p = MOCK_PRODUCTS.find(x => x.id === id);
+                            return p ? React.createElement('div', { key: id, className: 'w-[280px] flex-shrink-0 bg-gray-50 p-6 rounded-[2.5rem]' },
+                                React.createElement('img', { src: p.image, className: 'w-full aspect-square object-cover rounded-[1.5rem] mb-4' }),
+                                React.createElement('span', { className: 'text-[10px] font-black text-gray-400 uppercase tracking-widest' }, p.brand),
+                                React.createElement('h3', { className: 'text-xl font-black mb-4' }, p.name),
+                                React.createElement('div', { className: 'text-2xl font-black mb-4' }, `$${p.price}`),
+                                React.createElement('div', { className: 'space-y-4' },
+                                    Object.entries(p.specs).map(([k, v]) => React.createElement('div', { key: k, className: 'bg-white p-3 rounded-xl' },
+                                        React.createElement('div', { className: 'text-[9px] font-black text-gray-400 uppercase' }, k),
+                                        React.createElement('div', { className: 'text-sm font-bold' }, v)
+                                    ))
+                                )
+                            ) : null;
+                        })
+                    )
+                ))
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
+    </script>
+</body>
+</html>
